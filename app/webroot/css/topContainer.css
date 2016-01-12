@@ -1,0 +1,11 @@
+.x-tree-node div.feeds-node{
+    background:#eee url(cmp-bg.gif) repeat-x;
+    margin-top:1px;
+    border-top:1px solid #ddd;
+    border-bottom:1px solid #ccc;
+    padding-top:2px;
+    padding-bottom:1px;
+}
+.feeds-node .x-tree-node-icon {
+    display:none;
+}
