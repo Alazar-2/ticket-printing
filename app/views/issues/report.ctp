@@ -8,7 +8,6 @@
 			labelAlign: 'right',
 			url:'<?php echo $this->Html->url(array('controller' => 'issues', 'action' => 'report')); ?>',
 			defaultType: 'textfield',
-
 			items: [
 				<?php 
 					$options = array();
@@ -18,14 +17,50 @@
 						$options['items'] = $tickets;
 					$this->ExtForm->input('ticket_id', $options);
 				?>,
+				<?php
+                					$options = array();
+                						$options['items'] = $branches;
+                					$this->ExtForm->input('branch_id', $options);
+                				?>,
 { xtype: 'datefield',
  fieldLabel: 'from Date', 
  name: 'data[Issue][fromDt]', 
- id: 'data[Issue][fromDt]'}, 
+ id: 'data[Issue][fromDt]'},
+
  { xtype: 'datefield',
- fieldLabel: 'to Date', 
- name: 'data[Issue][toDt]', 
- id: 'data[Issue][toDt]'}
+ fieldLabel: 'to Date',
+ name: 'data[Issue][toDt]',
+ id: 'data[Issue][toDt]'},
+ {
+ 					xtype: 'combo',
+ 					store: new Ext.data.ArrayStore({
+ 						sortInfo: { field: "name", direction: "DSC" },
+ 						storeId: 'my_array_store',
+ 						id: 0,
+ 						fields: ['id','name'],
+
+ 						data: [
+ 						['HTML','HTML'],['EXCEL','EXCEL'],['PDF','PDF']
+ 						]
+
+ 					}),
+ 					displayField: 'name',
+ 					typeAhead: true,
+ 					hiddenName:'data[Issue][type]',
+ 					id: 'type',
+ 					name: 'type',
+ 					mode: 'local',
+ 					triggerAction: 'all',
+ 					emptyText: 'Select Type',
+ 					selectOnFocus:true,
+ 					valueField: 'id',
+ 					anchor: '100%',
+ 					fieldLabel: '<span style="color:red;">*</span> OutPut Type',
+ 					allowBlank: false,
+ 					editable: false,
+ 					lazyRender: true,
+ 					blankText: 'Your input is invalid.'
+ 				}
 				]
 		});
 		function IssueTicket(id) {
@@ -83,67 +118,19 @@
 						IssueAddWindow.collapse(true);
 				}
 			}],
-			buttons: [  {
-				text: '<?php __('Save'); ?>',
+			buttons: [{
+				text: '<?php __('Display '); ?>',
 				handler: function(btn){
-					IssueAddForm.getForm().submit({
-						waitMsg: '<?php __('Submitting your data...'); ?>',
-						waitTitle: '<?php __('Wait Please...'); ?>',
-						success: function(f,a){
-							Ext.Msg.show({
-								title: '<?php __('Success'); ?>',
-								buttons: Ext.MessageBox.OK,
-								msg: a.result.msg,
-                                icon: Ext.MessageBox.INFO
-							});
-							IssueAddForm.getForm().reset();
-<?php if(isset($parent_id)){ ?>
-							RefreshParentIssueData();
-<?php } else { ?>
-							RefreshIssueData();
-<?php } ?>
-						},
-						failure: function(f,a){
-							Ext.Msg.show({
-								title: '<?php __('Warning'); ?>',
-								buttons: Ext.MessageBox.OK,
-								msg: a.result.errormsg,
-                                icon: Ext.MessageBox.ERROR
-							});
-						}
-					});
+					 var form = IssueAddForm.getForm(); // or inputForm.getForm();
+					 var el = form.getEl().dom;
+					 var target = document.createAttribute("target");
+					 target.nodeValue = "_blank";
+					 el.setAttributeNode(target);
+					 el.action = form.url;
+					 el.submit();
 				}
-			}, {
-				text: '<?php __('Save & Close'); ?>',
-				handler: function(btn){
-					IssueAddForm.getForm().submit({
-						waitMsg: '<?php __('Submitting your data...'); ?>',
-						waitTitle: '<?php __('Wait Please...'); ?>',
-						success: function(f,a){
-							Ext.Msg.show({
-								title: '<?php __('Success'); ?>',
-								buttons: Ext.MessageBox.OK,
-								msg: a.result.msg,
-                                icon: Ext.MessageBox.INFO
-							});
-							IssueAddWindow.close();
-<?php if(isset($parent_id)){ ?>
-							RefreshParentIssueData();
-<?php } else { ?>
-							RefreshIssueData();
-<?php } ?>
-						},
-						failure: function(f,a){
-							Ext.Msg.show({
-								title: '<?php __('Warning'); ?>',
-								buttons: Ext.MessageBox.OK,
-								msg: a.result.errormsg,
-                                icon: Ext.MessageBox.ERROR
-							});
-						}
-					});
-				}
-			},{
+			},
+{
 				text: '<?php __('Cancel'); ?>',
 				handler: function(btn){
 					IssueAddWindow.close();

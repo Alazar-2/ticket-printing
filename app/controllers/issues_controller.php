@@ -1,7 +1,7 @@
 <?php
 
 class IssuesController extends AppController {
-
+    public $components = array('RequestHandler');
     var $name = 'Issues';
 
     function index() {
@@ -629,16 +629,100 @@ class IssuesController extends AppController {
     }
 	function report()
 	{
-		if (!empty($this->data)) {
-		   $this->autoRender = false;
-		print_r($this->data);
-		}
-		
-		
-		$tickets = $this->Issue->Ticket->find('list');
+       // phpinfo();
+      if (!empty($this->data)) {
+
+            $dataType = $this->data['Issue']['type'];
+            $this->autoRender = false;
+            $conditions['IssuesFieldsRecord.ticket_id'] = $this->data['Issue']['ticket_id'];
+            $conditions['IssuesFieldsRecord.created >='] = date('Y-m-d', strtotime($this->data['Issue']['fromDt']));
+            $conditions['IssuesFieldsRecord.created <='] = date('Y-m-d', strtotime($this->data['Issue']['toDt']));
+            $conditions['IssuesFieldsRecord.branchid'] = $this->data['Issue']['branch_id'];
+
+            $this->loadModel('IssuesFieldsRecord');
+            $this->Issue->recursive = -1;
+            $issuesList = $this->IssuesFieldsRecord->find('all', array('fields' => 'DISTINCT issueId', 'conditions' => $conditions));
+
+            $this->loadModel('Field');
+            $conditions2['Field.ticket_id'] = $this->data['Issue']['ticket_id'];
+            $conditions2['Field.name not like'] = '%copy%';
+            $conditions2['Field.type !='] = 'textarea';
+            $this->Field->recursive = -1;
+            $fieldsList = $this->Field->find('all', array('conditions' => $conditions2));
+            $output= '<table border="1">';
+         //   $output.= '<tr><th>issue id</th>';
+            foreach ($fieldsList as $field) {
+               $output.= '<th>' . $field['Field']['label'] . '</th>';
+            }
+            $output.= '</tr>';
+            foreach ($issuesList as $issue) {
+             //   $output.= "<tr><td>" . $issue['IssuesFieldsRecord']['issueId'] . "</td>";
+                foreach ($fieldsList as $field) {
+                    $conditions3['Record.field_id'] = $field['Field']['id'];
+                    $conditions3['Record.issue_id'] = $issue['IssuesFieldsRecord']['issueId'];
+                    $this->Record->recursive = -1;
+                    $this->IssuesFieldsRecord->recursive = -1;
+                    $query = "SELECT value FROM issues_fields_records WHERE issueId='" . $issue['IssuesFieldsRecord']['issueId'] . "' AND fieldId='" . $field['Field']['id'] . "' ";
+                   $res = $this->IssuesFieldsRecord->query($query);
+                  if (count($res) > 0) {
+                        $res[0]['issues_fields_records']['value'];
+                      //   print_r($res[0]['issues_fields_records']['value']);
+                        $output.= '<td>' . $res[0]['issues_fields_records']['value'] . '</td>';
+                    }
+                }
+                $output.=  '</tr>';
+            }
+            $output.= '</table>';
+            if($dataType == 'HTML') {
+                echo $output;
+            }
+            elseif($dataType == 'EXCEL'){
+                //   $file = $this->data['ImsCard']['title'] . ".xls";
+                $file="issue.xls";
+                header("Content-type: application/vnd.ms-excel");
+                header("Content-Disposition: attachment; filename=$file");
+                echo $output;
+            }
+            else{
+
+                $file = date("Issue", strtotime($this->data['Issue']['fromDt'])) . ".pdf";
+                header("Content-type:application/pdf");
+                header("Content-Transfer-Encoding: Binary");
+                header("Content-Disposition:inline;filename=$file");
+
+                require_once(APPLIBS . DS . 'html2pdf' . DS . 'html2pdf.class.php');
+                //   $h2p = new HTML2PDF('P', array(200, 300), 'en', true, 'UTF-8', array(0, 0, 0, 0));
+                $h2p = new HTML2PDF('L', 'A4', 'en');
+                $h2p->pdf->SetDisplayMode('fullpage');
+                $h2p->writeHTML($output);
+                $file = "Issue.pdf";
+                $h2p->Output($file);
+
+             /*   $file="issue.pdf";
+                header("Content-type:application/pdf");
+                header("Content-Transfer-Encoding: Binary");
+                header("Content-Disposition:inline;filename=$file");
+               // require_once(APPLIBS . DS . 'dompdf' . DS . 'dompdf_config.inc.php');
+
+              require_once(APPLIBS . 'Vendor' . DS . 'dompdf' . DS . 'dompdf_config.inc.php');
+              spl_autoload_register('DOMPDF_autoload');
+              $dompdf = new DOMPDF();
+              $dompdf->set_paper = 'A4';
+              $dompdf->load_html(utf8_decode($output), Configure::read('App.encoding'));
+              $dompdf->render();
+              echo $dompdf->output(); */
+            }
+
+
+        }
+        $this->loadmodel('Branch');
+        $tickets = $this->Issue->Ticket->find('list');
         $this->set(compact('tickets'));
+        $branches = $this->Branch->find('list');
+        $this->set(compact('branches'));
 	}
 
 }
+
 
 ?>

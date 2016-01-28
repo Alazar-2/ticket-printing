@@ -27,6 +27,7 @@ class BackOfficeController extends AppController {
                         'parameter' => $link['Link']['parameter'],
                         'function_name' => $link['Link']['function_name']);
                 }
+
             }
             $permittedContainers[] = $permittedContainer;
         }
